@@ -56,6 +56,25 @@
     background:#e7f9ee;color:#04833a}
   .badge.no{background:#fff1e6;color:#b4470b}
 
+  /* ---------- points ---------- */
+  #pts{display:none;margin:14px 14px 0;border-radius:18px;padding:16px 18px;color:#fff;
+    background:linear-gradient(135deg,#7c2d12,#c2410c 60%,#ea580c);box-shadow:var(--shadow)}
+  #pts .top{display:flex;align-items:flex-end;gap:10px}
+  #pts .lbl{font-size:12px;opacity:.85}
+  #pts .big{font-size:34px;font-weight:800;line-height:1}
+  #pts .unit{font-size:14px;font-weight:600;opacity:.9;padding-bottom:4px}
+  #pts .visits{margin-left:auto;text-align:right;font-size:11px;opacity:.85;line-height:1.5}
+  #pts .track{height:8px;border-radius:99px;background:rgba(255,255,255,.25);margin:14px 0 7px;overflow:hidden}
+  #pts .fill{height:100%;border-radius:99px;background:#ffd75e;width:0;transition:width .5s ease}
+  #pts .goal{font-size:11.5px;opacity:.92;line-height:1.5}
+  #pts .rule{margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.2);
+    font-size:11px;opacity:.85}
+  .earn{display:flex;justify-content:space-between;align-items:center;background:#fff7ed;
+    border:1px dashed #fdba74;color:#9a3412;border-radius:12px;padding:11px 13px;
+    font-size:13px;font-weight:600;margin-bottom:14px}
+  .pop{display:inline-block;background:#c2410c;color:#fff;border-radius:99px;
+    padding:5px 14px;font-size:14px;font-weight:800;margin-top:8px}
+
   /* ---------- menu ---------- */
   nav{position:sticky;top:0;z-index:5;background:var(--bg);padding:12px 14px 8px;
     display:flex;gap:8px;overflow-x:auto;scrollbar-width:none}
@@ -150,6 +169,21 @@
     <button class="btn-line" id="addFriend">＋ เพิ่มเพื่อน LINE ร้านเกียง</button>
   </div>
 
+  <div id="pts">
+    <div class="top">
+      <div>
+        <div class="lbl">แต้มสะสม · Kiang Points</div>
+        <div style="display:flex;align-items:flex-end;gap:6px">
+          <span class="big" id="ptsVal">0</span><span class="unit">แต้ม</span>
+        </div>
+      </div>
+      <div class="visits">มาแล้ว <b id="ptsVisits">0</b> ครั้ง<br>ใช้จ่ายรวม ฿<b id="ptsSpent">0</b></div>
+    </div>
+    <div class="track"><div class="fill" id="ptsFill"></div></div>
+    <div class="goal" id="ptsGoal">อีก 10 แต้ม รับชาไทยเย็นฟรี 1 แก้ว 🧋</div>
+    <div class="rule">ทุกๆ ฿100 รับ 1 แต้ม · แต้มผูกกับ LINE ของคุณ ไม่ต้องพกบัตร</div>
+  </div>
+
   <nav id="tabs"></nav>
   <div id="menu"></div>
 
@@ -210,6 +244,43 @@ const ITEMS = [
 
 const cart = {};
 const $ = s => document.querySelector(s);
+
+/* ---------- loyalty: ทุกๆ ฿100 = 1 แต้ม ---------- */
+const REWARD_AT = 10;                       // แต้มที่แลกของรางวัลได้
+const pointsFor = baht => Math.floor(baht / 100);
+const PTS = {
+  key: "kiang_points_guest",
+  data: { points: 0, visits: 0, spent: 0 },
+  bind(userId){
+    this.key = "kiang_points_" + (userId || "guest");
+    try {
+      const raw = localStorage.getItem(this.key);
+      if (raw) this.data = Object.assign(this.data, JSON.parse(raw));
+    } catch(_) {}
+    this.render();
+  },
+  save(){ try { localStorage.setItem(this.key, JSON.stringify(this.data)); } catch(_) {} },
+  earn(baht){
+    const got = pointsFor(baht);
+    this.data.points += got;
+    this.data.spent  += baht;
+    this.data.visits += 1;
+    this.save(); this.render();
+    return got;
+  },
+  render(){
+    const d = this.data;
+    $("#pts").style.display = "block";
+    $("#ptsVal").textContent    = d.points;
+    $("#ptsVisits").textContent = d.visits;
+    $("#ptsSpent").textContent  = d.spent.toLocaleString();
+    const prog = d.points >= REWARD_AT ? 100 : (d.points / REWARD_AT) * 100;
+    $("#ptsFill").style.width = Math.min(100, prog) + "%";
+    $("#ptsGoal").textContent = d.points >= REWARD_AT
+      ? "🎉 ครบ " + REWARD_AT + " แต้มแล้ว — แลกชาไทยเย็นฟรีได้ที่เคาน์เตอร์"
+      : "อีก " + (REWARD_AT - d.points) + " แต้ม รับชาไทยเย็นฟรี 1 แก้ว 🧋";
+  }
+};
 
 /* ---------- render ---------- */
 function renderTabs(){
@@ -285,6 +356,7 @@ $("#checkout").onclick = () => {
     '<div class="sub">โต๊ะ ' + TABLE + ' · ' + t.n + ' รายการ</div>' +
     '<div class="lines">' + lines + '</div>' +
     '<div class="total"><span>รวม</span><span>฿' + t.sum + '</span></div>' +
+    '<div class="earn"><span>🎁 ออเดอร์นี้จะได้รับ</span><span>+' + pointsFor(t.sum) + ' แต้ม</span></div>' +
     '<div class="row"><button class="ghost" id="back">แก้ไข</button>' +
     '<button class="primary" id="send">ส่งออเดอร์ไปครัว</button></div>';
   $("#sheet").classList.add("show");
@@ -299,7 +371,7 @@ async function send(){
   const name = window.__profile ? window.__profile.displayName : "ลูกค้า";
   let txt = "🍜 ออเดอร์ใหม่ — โต๊ะ " + TABLE + "\n";
   for(const id in cart){ const it = ITEMS.find(x => x.id === +id); txt += "• " + it.th + " × " + cart[id] + "\n"; }
-  txt += "รวม ฿" + t.sum;
+  txt += "รวม ฿" + t.sum + "\n🎁 ได้รับ " + pointsFor(t.sum) + " แต้ม";
   // ระบบจริง: POST txt + userId + table ไป backend → ตอบกลับด้วย push message
   let sent = false;
   try {
@@ -309,10 +381,12 @@ async function send(){
       sent = true;
     }
   } catch(_) {}
+  const got = PTS.earn(t.sum);
   $("#panel").innerHTML =
     '<div class="done"><div class="tick">✓</div>' +
     '<h3>รับออเดอร์แล้ว!</h3>' +
-    '<div class="sub">โต๊ะ ' + TABLE + ' · ฿' + t.sum + ' · ขอบคุณค่ะ คุณ' + name + '<br>' +
+    '<div class="pop">+' + got + ' แต้ม · รวม ' + PTS.data.points + ' แต้ม</div>' +
+    '<div class="sub" style="margin-top:10px">โต๊ะ ' + TABLE + ' · ฿' + t.sum + ' · ขอบคุณค่ะ คุณ' + name + '<br>' +
     (sent ? 'ส่งสรุปเข้าแชท LINE เรียบร้อย' : 'ระบบจริงจะส่งสรุปเข้าแชท LINE ผ่าน Messaging API') +
     '</div></div>' +
     '<div class="row"><button class="primary" id="ok">เสร็จสิ้น</button></div>';
@@ -329,6 +403,7 @@ async function boot(){
   renderTabs(); renderMenu(""); sync();
 
   if(!window.liff || !LIFF_ID || LIFF_ID.indexOf("PASTE") === 0){
+    PTS.bind(null);
     step("s2","wait","preview"); step("s3","done","เมนู ✓");
     return; // browser preview mode
   }
@@ -338,6 +413,7 @@ async function boot(){
 
     const p = await liff.getProfile();
     window.__profile = p;
+    PTS.bind(p.userId);
     $("#avatar").src = p.pictureUrl || "";
     $("#uname").textContent = p.displayName;
     const uidEl = $("#uid");
@@ -372,6 +448,7 @@ async function boot(){
       } catch(_) {}
     }
   }catch(err){
+    PTS.bind(null);
     step("s2","wait","LIFF error"); step("s3","done","เมนู (preview)");
     console.error(err);
   }
