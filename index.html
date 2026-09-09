@@ -174,8 +174,8 @@
    CONFIG — ใส่ค่า 2 ตัวนี้ก่อน deploy
    ============================================================ */
 const CONFIG = {
-  liffId: "PASTE_YOUR_LIFF_ID",                 // e.g. "2001234567-AbCdEfGh"
-  addFriendUrl: "https://lin.ee/PASTE_YOUR_OA"  // fallback add-friend link
+  liffId: "2011520365-duaO9wNZ",
+  addFriendUrl: ""   // optional lin.ee link; blank = rely on liff.requestFriendship()
 };
 
 /* ---------- params: ?table=12  (&liffId=... for quick testing) ---------- */
@@ -328,7 +328,7 @@ function step(el, state, label){
 async function boot(){
   renderTabs(); renderMenu(""); sync();
 
-  if(!window.liff || !LIFF_ID || LIFF_ID === "PASTE_YOUR_LIFF_ID"){
+  if(!window.liff || !LIFF_ID || LIFF_ID.indexOf("PASTE") === 0){
     step("s2","wait","preview"); step("s3","done","เมนู ✓");
     return; // browser preview mode
   }
@@ -360,7 +360,7 @@ async function boot(){
     }else{
       step("s2","wait","ยังไม่เพิ่มเพื่อน");
       $("#fbadge").textContent = "ยังไม่เพิ่ม"; $("#fbadge").classList.add("no");
-      $("#friendCard").style.display = "block";
+      if(CONFIG.addFriendUrl) $("#friendCard").style.display = "block";
       // LIFF 2.28+ in-app prompt (ต้องตั้ง size = Full)
       try {
         const r = await liff.requestFriendship();
