@@ -1,0 +1,386 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>ร้านเกียง — เมนู</title>
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+<style>
+  :root{
+    --bg:#faf7f2; --card:#fff; --ink:#1d1a16; --muted:#7c7368;
+    --line:#e8e0d4; --brand:#c2410c; --brand-ink:#fff; --ok:#06c755;
+    --shadow:0 1px 2px rgba(0,0,0,.05),0 8px 24px rgba(29,26,22,.06);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans Thai",Roboto,sans-serif;
+    padding-bottom:96px;-webkit-tap-highlight-color:transparent}
+  .wrap{max-width:520px;margin:0 auto}
+
+  /* ---------- header ---------- */
+  header{background:linear-gradient(160deg,#1d1a16,#3b3229);color:#fff;padding:18px 18px 16px}
+  .brandrow{display:flex;align-items:center;gap:12px}
+  .logo{width:44px;height:44px;border-radius:12px;background:var(--brand);
+    display:grid;place-items:center;font-size:22px;flex:none}
+  .brandrow h1{font-size:17px;margin:0;line-height:1.25}
+  .brandrow small{color:#c9bfb1;font-size:12px}
+  .table-chip{margin-left:auto;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);
+    padding:6px 12px;border-radius:999px;font-size:13px;font-weight:600;text-align:center;flex:none}
+  .table-chip b{display:block;font-size:18px;line-height:1.1}
+
+  /* ---------- flow proof strip ---------- */
+  .flow{display:flex;gap:6px;margin-top:14px}
+  .step{flex:1;background:rgba(255,255,255,.08);border-radius:10px;padding:8px 8px;font-size:11px;
+    color:#d9d1c5;border:1px solid rgba(255,255,255,.08)}
+  .step b{display:block;font-size:12px;color:#fff;margin-top:2px}
+  .step.done{background:rgba(6,199,85,.16);border-color:rgba(6,199,85,.45)}
+  .step.done b{color:#7ef0ab}
+  .step.wait{background:rgba(255,193,7,.14);border-color:rgba(255,193,7,.4)}
+  .step.wait b{color:#ffd75e}
+
+  /* ---------- friend banner ---------- */
+  #friendCard{display:none;margin:14px 14px 0;background:#fff;border:1px solid var(--line);
+    border-radius:16px;padding:14px;box-shadow:var(--shadow)}
+  #friendCard p{margin:0 0 10px;font-size:14px;color:var(--muted)}
+  #friendCard strong{color:var(--ink)}
+  .btn-line{width:100%;background:var(--ok);color:#fff;border:0;border-radius:12px;
+    padding:13px;font-size:15px;font-weight:700;font-family:inherit}
+
+  /* ---------- profile ---------- */
+  #who{display:none;align-items:center;gap:10px;margin:14px 14px 0;padding:10px 12px;
+    background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}
+  #who img{width:34px;height:34px;border-radius:50%;background:#eee}
+  #who .n{font-size:14px;font-weight:600}
+  #who .s{font-size:11px;color:var(--muted)}
+  .badge{margin-left:auto;font-size:11px;font-weight:700;padding:4px 9px;border-radius:999px;
+    background:#e7f9ee;color:#04833a}
+  .badge.no{background:#fff1e6;color:#b4470b}
+
+  /* ---------- menu ---------- */
+  nav{position:sticky;top:0;z-index:5;background:var(--bg);padding:12px 14px 8px;
+    display:flex;gap:8px;overflow-x:auto;scrollbar-width:none}
+  nav::-webkit-scrollbar{display:none}
+  nav button{white-space:nowrap;border:1px solid var(--line);background:#fff;color:var(--muted);
+    padding:8px 14px;border-radius:999px;font-size:13px;font-weight:600;font-family:inherit}
+  nav button.on{background:var(--ink);border-color:var(--ink);color:#fff}
+  h2{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);
+    margin:20px 16px 8px}
+  .item{display:flex;gap:12px;align-items:center;background:var(--card);border:1px solid var(--line);
+    border-radius:16px;padding:12px;margin:8px 14px;box-shadow:var(--shadow)}
+  .pic{width:54px;height:54px;border-radius:12px;background:#f3ece1;display:grid;place-items:center;
+    font-size:26px;flex:none}
+  .info{flex:1;min-width:0}
+  .info .th{font-size:15px;font-weight:600}
+  .info .en{font-size:12px;color:var(--muted)}
+  .price{font-size:14px;font-weight:700;margin-top:3px}
+  .qty{display:flex;align-items:center;gap:8px;flex:none}
+  .qty button{width:32px;height:32px;border-radius:10px;border:1px solid var(--line);background:#fff;
+    font-size:19px;line-height:1;color:var(--ink);font-family:inherit}
+  .qty button.add{background:var(--brand);border-color:var(--brand);color:#fff}
+  .qty .n{min-width:18px;text-align:center;font-weight:700;font-size:15px}
+  .qty .n[data-zero="1"]{display:none}
+  .qty .minus[data-zero="1"]{display:none}
+
+  /* ---------- cart bar ---------- */
+  #bar{position:fixed;left:0;right:0;bottom:0;padding:12px 14px calc(12px + env(safe-area-inset-bottom));
+    background:rgba(250,247,242,.94);backdrop-filter:blur(10px);border-top:1px solid var(--line);
+    transform:translateY(120%);transition:transform .22s ease}
+  #bar.show{transform:none}
+  #bar .inner{max-width:520px;margin:0 auto}
+  #checkout{width:100%;background:var(--brand);color:var(--brand-ink);border:0;border-radius:14px;
+    padding:15px 18px;font-size:16px;font-weight:700;font-family:inherit;
+    display:flex;justify-content:space-between;align-items:center}
+  #checkout .c{background:rgba(255,255,255,.22);border-radius:8px;padding:2px 9px;font-size:14px}
+
+  /* ---------- sheet ---------- */
+  #sheet{position:fixed;inset:0;background:rgba(29,26,22,.5);display:none;z-index:20}
+  #sheet.show{display:block}
+  .panel{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:22px 22px 0 0;
+    padding:20px 18px calc(20px + env(safe-area-inset-bottom));max-width:520px;margin:0 auto}
+  .panel h3{margin:0 0 4px;font-size:18px}
+  .panel .sub{color:var(--muted);font-size:13px;margin-bottom:14px}
+  .lines{border-top:1px solid var(--line);padding-top:10px;margin-bottom:10px;
+    max-height:38vh;overflow:auto}
+  .lines div{display:flex;justify-content:space-between;font-size:14px;padding:6px 0}
+  .total{display:flex;justify-content:space-between;font-size:17px;font-weight:800;
+    border-top:2px solid var(--ink);padding-top:10px;margin-bottom:14px}
+  .panel .row{display:flex;gap:10px}
+  .ghost{flex:1;background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px;
+    font-size:15px;font-weight:600;font-family:inherit;color:var(--muted)}
+  .primary{flex:2;background:var(--brand);color:#fff;border:0;border-radius:12px;padding:14px;
+    font-size:15px;font-weight:700;font-family:inherit}
+  .done{text-align:center;padding:12px 0 6px}
+  .done .tick{width:64px;height:64px;border-radius:50%;background:#e7f9ee;color:#04833a;
+    display:grid;place-items:center;font-size:34px;margin:0 auto 12px}
+
+  .note{margin:22px 16px 8px;font-size:11px;line-height:1.6;color:var(--muted);
+    background:#fff;border:1px dashed var(--line);border-radius:12px;padding:12px}
+  .note b{color:var(--ink)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brandrow">
+      <div class="logo">🍜</div>
+      <div>
+        <h1>ร้านเกียง</h1>
+        <small>Kiang Restaurant</small>
+      </div>
+      <div class="table-chip">โต๊ะ<b id="tableNo">—</b></div>
+    </div>
+    <div class="flow">
+      <div class="step done" id="s1">1<b>สแกน QR ✓</b></div>
+      <div class="step wait" id="s2">2<b>เพิ่มเพื่อน…</b></div>
+      <div class="step wait" id="s3">3<b>เปิดเมนู…</b></div>
+    </div>
+  </header>
+
+  <div id="who">
+    <img id="avatar" alt="">
+    <div>
+      <div class="n" id="uname">—</div>
+      <div class="s" id="uid">LINE userId —</div>
+    </div>
+    <span class="badge" id="fbadge">friend</span>
+  </div>
+
+  <div id="friendCard">
+    <p>กด <strong>เพิ่มเพื่อน</strong> เพื่อรับโปรโมชั่นและติดตามสถานะออเดอร์ของคุณ</p>
+    <button class="btn-line" id="addFriend">＋ เพิ่มเพื่อน LINE ร้านเกียง</button>
+  </div>
+
+  <nav id="tabs"></nav>
+  <div id="menu"></div>
+
+  <div class="note">
+    <b>Demo note.</b> การส่งออเดอร์ในเดโมนี้จบที่หน้าจอยืนยัน — ระบบจริงจะ POST ไปที่ backend
+    แล้วส่ง push message กลับเข้าแชท LINE ของลูกค้าผ่าน Messaging API.
+    เลขโต๊ะมาจาก <code>?table=</code> บน QR ของแต่ละโต๊ะ.
+  </div>
+</div>
+
+<div id="bar"><div class="inner">
+  <button id="checkout">
+    <span>ดูตะกร้า / สั่งอาหาร</span>
+    <span class="c"><span id="cCount">0</span> · ฿<span id="cTotal">0</span></span>
+  </button>
+</div></div>
+
+<div id="sheet"><div class="panel" id="panel"></div></div>
+
+<script>
+/* ============================================================
+   CONFIG — ใส่ค่า 2 ตัวนี้ก่อน deploy
+   ============================================================ */
+const CONFIG = {
+  liffId: "PASTE_YOUR_LIFF_ID",                 // e.g. "2001234567-AbCdEfGh"
+  addFriendUrl: "https://lin.ee/PASTE_YOUR_OA"  // fallback add-friend link
+};
+
+/* ---------- params: ?table=12  (&liffId=... for quick testing) ---------- */
+const P = new URLSearchParams(location.search);
+const TABLE = P.get("table") || "—";
+document.getElementById("tableNo").textContent = TABLE;
+if (P.get("liffId")) localStorage.setItem("kiang_liff", P.get("liffId"));
+const LIFF_ID = P.get("liffId") || localStorage.getItem("kiang_liff") || CONFIG.liffId;
+
+/* ---------- menu data ---------- */
+const CATS = [
+  { key:"main",  label:"จานหลัก",    title:"จานหลัก · Mains" },
+  { key:"snack", label:"ทานเล่น",    title:"ของทานเล่น · Snacks" },
+  { key:"drink", label:"เครื่องดื่ม", title:"เครื่องดื่ม · Drinks" },
+  { key:"dessert",label:"ของหวาน",   title:"ของหวาน · Desserts" }
+];
+const ITEMS = [
+  {id:1, c:"main",  e:"🍤", th:"ผัดไทยกุ้งสด",     en:"Pad Thai with prawns",   p:120},
+  {id:2, c:"main",  e:"🍲", th:"ต้มยำกุ้งน้ำข้น",   en:"Tom Yum Goong",          p:180},
+  {id:3, c:"main",  e:"🦀", th:"ข้าวผัดปู",         en:"Crab fried rice",        p:150},
+  {id:4, c:"main",  e:"🥬", th:"คะน้าหมูกรอบ",      en:"Crispy pork & kale",     p:130},
+  {id:5, c:"main",  e:"🍚", th:"ข้าวสวย",           en:"Steamed jasmine rice",   p:20},
+  {id:6, c:"snack", e:"🥗", th:"ส้มตำไทย",          en:"Som Tam Thai",           p:80},
+  {id:7, c:"snack", e:"🍗", th:"ไก่ทอดหาดใหญ่",     en:"Hat Yai fried chicken",  p:110},
+  {id:8, c:"snack", e:"🍢", th:"หมูปิ้ง (3 ไม้)",   en:"Grilled pork skewers",   p:60},
+  {id:9, c:"drink", e:"🧋", th:"ชาไทยเย็น",         en:"Thai iced tea",          p:60},
+  {id:10,c:"drink", e:"🥥", th:"น้ำมะพร้าว",        en:"Fresh coconut water",    p:70},
+  {id:11,c:"drink", e:"🍺", th:"เบียร์สิงห์",       en:"Singha beer",            p:90},
+  {id:12,c:"dessert",e:"🥭",th:"ข้าวเหนียวมะม่วง",  en:"Mango sticky rice",      p:120},
+  {id:13,c:"dessert",e:"🍧",th:"บิงซูชาไทย",        en:"Thai tea bingsu",        p:140}
+];
+
+const cart = {};
+const $ = s => document.querySelector(s);
+
+/* ---------- render ---------- */
+function renderTabs(){
+  const nav = $("#tabs");
+  nav.innerHTML = "";
+  const all = document.createElement("button");
+  all.textContent = "ทั้งหมด"; all.className = "on"; all.dataset.k = "";
+  nav.appendChild(all);
+  CATS.forEach(c => {
+    const b = document.createElement("button");
+    b.textContent = c.label; b.dataset.k = c.key;
+    nav.appendChild(b);
+  });
+  nav.onclick = e => {
+    const b = e.target.closest("button"); if(!b) return;
+    [...nav.children].forEach(x => x.classList.toggle("on", x === b));
+    renderMenu(b.dataset.k);
+  };
+}
+function renderMenu(filter){
+  const wrap = $("#menu"); wrap.innerHTML = "";
+  CATS.filter(c => !filter || c.key === filter).forEach(c => {
+    const list = ITEMS.filter(i => i.c === c.key);
+    if(!list.length) return;
+    const h = document.createElement("h2"); h.textContent = c.title; wrap.appendChild(h);
+    list.forEach(i => {
+      const n = cart[i.id] || 0;
+      const el = document.createElement("div");
+      el.className = "item";
+      el.innerHTML =
+        '<div class="pic">' + i.e + '</div>' +
+        '<div class="info"><div class="th">' + i.th + '</div>' +
+        '<div class="en">' + i.en + '</div>' +
+        '<div class="price">฿' + i.p + '</div></div>' +
+        '<div class="qty">' +
+          '<button class="minus" data-zero="' + (n?0:1) + '" data-m="' + i.id + '">−</button>' +
+          '<span class="n" data-zero="' + (n?0:1) + '">' + n + '</span>' +
+          '<button class="add" data-a="' + i.id + '">＋</button>' +
+        '</div>';
+      wrap.appendChild(el);
+    });
+  });
+}
+document.addEventListener("click", e => {
+  const a = e.target.closest("[data-a]"), m = e.target.closest("[data-m]");
+  if(a){ const id = +a.dataset.a; cart[id] = (cart[id]||0) + 1; sync(); }
+  if(m){ const id = +m.dataset.m; if(cart[id]){ cart[id]--; if(!cart[id]) delete cart[id]; } sync(); }
+});
+function totals(){
+  let n = 0, sum = 0;
+  for(const id in cart){ const it = ITEMS.find(x => x.id === +id); n += cart[id]; sum += cart[id] * it.p; }
+  return {n, sum};
+}
+function sync(){
+  const on = document.querySelector("#tabs .on");
+  renderMenu(on ? on.dataset.k : "");
+  const t = totals();
+  $("#cCount").textContent = t.n;
+  $("#cTotal").textContent = t.sum;
+  $("#bar").classList.toggle("show", t.n > 0);
+}
+
+/* ---------- checkout sheet ---------- */
+$("#checkout").onclick = () => {
+  const t = totals();
+  let lines = "";
+  for(const id in cart){
+    const it = ITEMS.find(x => x.id === +id);
+    lines += '<div><span>' + it.th + ' × ' + cart[id] + '</span><span>฿' + (it.p*cart[id]) + '</span></div>';
+  }
+  $("#panel").innerHTML =
+    '<h3>ยืนยันออเดอร์</h3>' +
+    '<div class="sub">โต๊ะ ' + TABLE + ' · ' + t.n + ' รายการ</div>' +
+    '<div class="lines">' + lines + '</div>' +
+    '<div class="total"><span>รวม</span><span>฿' + t.sum + '</span></div>' +
+    '<div class="row"><button class="ghost" id="back">แก้ไข</button>' +
+    '<button class="primary" id="send">ส่งออเดอร์ไปครัว</button></div>';
+  $("#sheet").classList.add("show");
+  $("#back").onclick = close;
+  $("#send").onclick = send;
+};
+function close(){ $("#sheet").classList.remove("show"); }
+$("#sheet").onclick = e => { if(e.target.id === "sheet") close(); };
+
+async function send(){
+  const t = totals();
+  const name = window.__profile ? window.__profile.displayName : "ลูกค้า";
+  let txt = "🍜 ออเดอร์ใหม่ — โต๊ะ " + TABLE + "\n";
+  for(const id in cart){ const it = ITEMS.find(x => x.id === +id); txt += "• " + it.th + " × " + cart[id] + "\n"; }
+  txt += "รวม ฿" + t.sum;
+  // ระบบจริง: POST txt + userId + table ไป backend → ตอบกลับด้วย push message
+  let sent = false;
+  try {
+    if(window.liff && liff.isInClient() && liff.getContext() &&
+       ["utou","room","group"].includes(liff.getContext().type)){
+      await liff.sendMessages([{ type:"text", text: txt }]);
+      sent = true;
+    }
+  } catch(_) {}
+  $("#panel").innerHTML =
+    '<div class="done"><div class="tick">✓</div>' +
+    '<h3>รับออเดอร์แล้ว!</h3>' +
+    '<div class="sub">โต๊ะ ' + TABLE + ' · ฿' + t.sum + ' · ขอบคุณค่ะ คุณ' + name + '<br>' +
+    (sent ? 'ส่งสรุปเข้าแชท LINE เรียบร้อย' : 'ระบบจริงจะส่งสรุปเข้าแชท LINE ผ่าน Messaging API') +
+    '</div></div>' +
+    '<div class="row"><button class="primary" id="ok">เสร็จสิ้น</button></div>';
+  $("#ok").onclick = () => { for(const k in cart) delete cart[k]; sync(); close(); };
+}
+
+/* ---------- LIFF boot ---------- */
+function step(el, state, label){
+  const n = document.getElementById(el);
+  n.className = "step " + state;
+  n.querySelector("b").textContent = label;
+}
+async function boot(){
+  renderTabs(); renderMenu(""); sync();
+
+  if(!window.liff || !LIFF_ID || LIFF_ID === "PASTE_YOUR_LIFF_ID"){
+    step("s2","wait","preview"); step("s3","done","เมนู ✓");
+    return; // browser preview mode
+  }
+  try{
+    await liff.init({ liffId: LIFF_ID });
+    if(!liff.isLoggedIn()){ liff.login({ redirectUri: location.href }); return; }
+
+    const p = await liff.getProfile();
+    window.__profile = p;
+    $("#avatar").src = p.pictureUrl || "";
+    $("#uname").textContent = p.displayName;
+    const uidEl = $("#uid");
+    uidEl.textContent = "userId " + p.userId.slice(0,10) + "… (แตะเพื่อคัดลอก)";
+    uidEl.style.cursor = "pointer";
+    uidEl.onclick = async () => {
+      try { await navigator.clipboard.writeText(p.userId); uidEl.textContent = "คัดลอก userId แล้ว ✓"; }
+      catch(_) { uidEl.textContent = p.userId; }
+      setTimeout(() => { uidEl.textContent = "userId " + p.userId.slice(0,10) + "… (แตะเพื่อคัดลอก)"; }, 2500);
+    };
+    $("#who").style.display = "flex";
+    step("s3","done","เมนู ✓");
+
+    let isFriend = false;
+    try { isFriend = (await liff.getFriendship()).friendFlag; } catch(_) {}
+
+    if(isFriend){
+      step("s2","done","เพิ่มเพื่อนแล้ว ✓");
+      $("#fbadge").textContent = "เพื่อนแล้ว ✓";
+    }else{
+      step("s2","wait","ยังไม่เพิ่มเพื่อน");
+      $("#fbadge").textContent = "ยังไม่เพิ่ม"; $("#fbadge").classList.add("no");
+      $("#friendCard").style.display = "block";
+      // LIFF 2.28+ in-app prompt (ต้องตั้ง size = Full)
+      try {
+        const r = await liff.requestFriendship();
+        if(r && r.friendFlag){
+          step("s2","done","เพิ่มเพื่อนแล้ว ✓");
+          $("#fbadge").textContent = "เพื่อนแล้ว ✓"; $("#fbadge").classList.remove("no");
+          $("#friendCard").style.display = "none";
+        }
+      } catch(_) {}
+    }
+  }catch(err){
+    step("s2","wait","LIFF error"); step("s3","done","เมนู (preview)");
+    console.error(err);
+  }
+}
+$("#addFriend").onclick = () => {
+  if(window.liff && liff.isInClient()) liff.openWindow({ url: CONFIG.addFriendUrl, external: true });
+  else location.href = CONFIG.addFriendUrl;
+};
+boot();
+</script>
+</body>
+</html>
